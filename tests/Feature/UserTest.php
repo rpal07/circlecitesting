@@ -2,38 +2,58 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use App\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {
-   
-    use WithFaker,RefreshDatabase;
+
+    use WithFaker, RefreshDatabase;
 
     private $password = "mypassword";
-    
+
     public function testUserCreation()
     {
-       	
-       	$name = $this->faker->name();
-       	$email = $this->faker->email();
+
+        $name = $this->faker->name();
+        $email = $this->faker->email();
 
         $response = $this->postJson('/api/auth/signup', [
-            'name' => $name, 
+            'name' => $name,
             'email' => $email,
-            'password' => $this->password, 
-            'password_confirmation' => $this->password
-        ]); 
-
+            'password' => $this->password,
+            'password_confirmation' => $this->password,
+        ]);
 
         $response
             ->assertStatus(201)
             ->assertExactJson([
                 'message' => "Successfully created user!",
             ]);
-    }//testUserCreation
-    
+    } //testUserCreation
+
+    public function testUserLogin()
+    {
+        $name = $this->faker->name();
+        $email = $this->faker->email();
+
+        $user = new User([
+            'name' => $name,
+            'email' => $email,
+            'password' => bcrypt($this->password),
+        ]);
+
+        $user->save();
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => $email,
+            'password' => $this->password,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertAuthenticated();
+    }
+
 }
